@@ -19,7 +19,7 @@ from typing import List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from scipy.sparse import hstack, vstack
+from scipy.sparse import vstack
 from sklearn.feature_extraction.text import (
     HashingVectorizer,
     TfidfTransformer,
@@ -132,7 +132,7 @@ def _string_encoding(
     tfidf = TfidfTransformer().fit(all_enc)
     main_enc = tfidf.transform(main_enc)
     aux_enc = tfidf.transform(aux_enc)
-    return main_enc, aux_enc
+    return main_enc.todense(), aux_enc.todense()
 
 
 def _nearest_matches(main_array, aux_array) -> Tuple[np.ndarray, np.ndarray]:
@@ -154,8 +154,8 @@ def _nearest_matches(main_array, aux_array) -> Tuple[np.ndarray, np.ndarray]:
     """
     # Find nearest neighbor using KNN :
     neigh = NearestNeighbors(n_neighbors=1)
-    neigh.fit(aux_array)
-    distance, neighbors = neigh.kneighbors(main_array, return_distance=True)
+    neigh.fit(np.asarray(aux_array))
+    distance, neighbors = neigh.kneighbors(np.asarray(main_array), return_distance=True)
     idx_closest = np.ravel(neighbors)
     distance = distance / np.max(distance)
     # Normalizing distance between 0 and 1:
@@ -423,8 +423,8 @@ def fuzzy_join(
             analyzer=analyzer,
             ngram_range=ngram_range,
         )
-        main_enc = hstack((main_num_enc, main_str_enc), format="csr")
-        aux_enc = hstack((aux_num_enc, aux_str_enc), format="csr")
+        main_enc = np.hstack((main_num_enc, main_str_enc))
+        aux_enc = np.hstack((aux_num_enc, aux_str_enc))
         idx_closest, matching_score = _nearest_matches(main_enc, aux_enc)
     else:
         main_enc, aux_enc = _string_encoding(
