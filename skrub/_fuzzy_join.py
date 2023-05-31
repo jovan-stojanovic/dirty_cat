@@ -18,6 +18,8 @@ from sklearn.feature_extraction.text import (
 from sklearn.neighbors import NearestNeighbors
 from sklearn.preprocessing import StandardScaler
 
+from sklearn import random_projection
+
 # Required for ignoring lines too long in the docstrings
 # flake8: noqa: E501
 
@@ -125,7 +127,13 @@ def _string_encoding(
     tfidf = TfidfTransformer().fit(all_enc)
     main_enc = tfidf.transform(main_enc)
     aux_enc = tfidf.transform(aux_enc)
-    return main_enc.todense(), aux_enc.todense()
+
+    transformer = random_projection.GaussianRandomProjection(eps=0.4)
+
+    main_enc_d = transformer.fit_transform(main_enc)
+    aux_enc_d = transformer.fit_transform(main_enc)
+
+    return main_enc_d, aux_enc_d
 
 
 def _nearest_matches(main_array, aux_array) -> Tuple[np.ndarray, np.ndarray]:
