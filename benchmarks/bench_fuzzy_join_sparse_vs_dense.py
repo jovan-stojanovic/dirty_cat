@@ -585,15 +585,10 @@ def plot(df: pd.DataFrame):
     # Create the subplots but indexed by 1 value
     for i, dataset_name in enumerate(np.unique(df["dataset_name"])):
         current_df = df[df["dataset_name"] == dataset_name].reset_index()
-        sns.scatterplot(
-            x="time_fj",
-            y="f1",
-            hue="sparse",
-            style="ngram_range",
-            size="analyzer",
-            alpha=0.8,
-            data=current_df,
-            ax=axes[i % n_rows, i // n_rows],
+        sns.boxplot(data=current_df,
+                    x="time_fj",
+                    hue="sparse",
+                    ax=axes[i % n_rows, i // n_rows],
         )
         obs = current_df["n_obs"][0]
         avg_word = current_df["avg_count"][0]
@@ -601,7 +596,7 @@ def plot(df: pd.DataFrame):
             f"{dataset_name} Obs={obs} Avg_word_length={avg_word} "
         )
         # remove legend
-        axes[i % n_rows, i // n_rows].get_legend().remove()
+        # axes[i % n_rows, i // n_rows].get_legend().remove()
         # Put a legend to the right side if last row
         if i == n_datasets - 1:
             axes[i % n_rows, i // n_rows].legend(loc="center right")
