@@ -3,7 +3,8 @@ Implements the MinHashEncoder, which encodes string categorical features by
 applying the MinHash method to n-gram decompositions of strings.
 """
 
-from typing import Callable, Collection, Dict, List, Literal, Tuple
+from collections.abc import Callable, Collection
+from typing import Literal
 
 import numpy as np
 from joblib import Parallel, delayed, effective_n_jobs
@@ -116,8 +117,9 @@ class MinHashEncoder(BaseEstimator, TransformerMixin):
 
     def __init__(
         self,
+        *,
         n_components: int = 30,
-        ngram_range: Tuple[int, int] = (2, 4),
+        ngram_range: tuple[int, int] = (2, 4),
         hashing: Literal["fast", "murmur"] = "fast",
         minmax_hash: bool = False,
         handle_missing: Literal["error", "zero_impute"] = "zero_impute",
@@ -130,7 +132,7 @@ class MinHashEncoder(BaseEstimator, TransformerMixin):
         self.handle_missing = handle_missing
         self.n_jobs = n_jobs
 
-    def _more_tags(self) -> Dict[str, List[str]]:
+    def _more_tags(self) -> dict[str, list[str]]:
         """
         Used internally by sklearn to ease the estimator checks.
         """
@@ -232,7 +234,7 @@ class MinHashEncoder(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, ) or (n_samples, 1)
+        X : array-like, shape (n_samples, ) or (n_samples, n_columns)
             The string data to encode. Only here for compatibility.
         y : None
             Unused, only here for compatibility.
@@ -261,12 +263,12 @@ class MinHashEncoder(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, ) or (n_samples, 1)
+        X : array-like, shape (n_samples, ) or (n_samples, n_columns)
             The string data to encode.
 
         Returns
         -------
-        :obj:`~numpy.ndarray` of shape (n_samples, n_components)
+        :obj:`~numpy.ndarray` of shape (n_samples, n_columns * n_components)
             Transformed input.
         """
         check_is_fitted(self, "hash_dict_")
