@@ -5,8 +5,6 @@ from sklearn.metrics.pairwise import linear_kernel, pairwise_distances
 from sklearn.utils._tags import _safe_tags
 from sklearn.utils.estimator_checks import _is_pairwise_metric, parametrize_with_checks
 
-from skrub._utils import parse_version
-
 from skrub import (  # isort:skip
     DatetimeEncoder,
     # Joiner,
@@ -14,7 +12,6 @@ from skrub import (  # isort:skip
     MinHashEncoder,
     SimilarityEncoder,
     TableVectorizer,
-    # TargetEncoder,
 )
 
 
@@ -69,7 +66,6 @@ def _tested_estimators():
         MinHashEncoder,
         SimilarityEncoder,
         TableVectorizer,
-        # TargetEncoder,  # will be tested in scikit-learn
     ]:
         yield Estimator()
 
@@ -77,9 +73,8 @@ def _tested_estimators():
 # TODO: remove the skip when the scikit-learn common test will be more lenient towards
 # the string categorical data:
 # xref: https://github.com/scikit-learn/scikit-learn/pull/26860
-@pytest.mark.skipif(
-    parse_version(sklearn.__version__) < parse_version("1.4"),
-    reason="Common tests in scikit-learn are not allowing for categorical string data.",
+@pytest.mark.skip(
+    "Common tests in scikit-learn are not allowing for categorical string data."
 )
 @parametrize_with_checks(list(_tested_estimators()))
 def test_estimators_compatibility_sklearn(estimator, check, request):

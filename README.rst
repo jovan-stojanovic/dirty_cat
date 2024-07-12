@@ -21,6 +21,7 @@
 library that facilitates prepping your tables for machine learning.
 
 If you like the package, spread the word and ⭐ this repository!
+You can also join the `discord server <https://discord.gg/ABaPnm7fDC>`_.
 
 What can `skrub` do?
 --------------------
@@ -49,15 +50,25 @@ For a detailed description of the problem of encoding dirty categorical data, se
 `Similarity encoding for learning with dirty categorical variables <https://hal.inria.fr/hal-01806175>`_ [1]_
 and `Encoding high-cardinality string categorical variables <https://hal.inria.fr/hal-02171256v4>`_ [2]_.
 
-Installation (WIP)
-------------------
+Installation
+------------
 
-There are currently no PiPy releases.
-You can still install the package from the GitHub repository with:
+The easiest way to install skrub is via `pip`:
 
 .. code-block:: shell
 
-    pip install git+https://github.com/skrub-data/skrub.git
+    pip install skrub -U
+
+
+or `conda`:
+
+.. code-block:: shell
+
+    conda install -c conda-forge skrub
+
+
+The documentation includes more detailed `installation instructions <https://skrub-data.github.io/install.html>`_.
+
 
 
 Dependencies
@@ -65,10 +76,6 @@ Dependencies
 
 Dependencies and minimal versions are listed in the `setup <https://github.com/skrub-data/skrub/blob/main/setup.cfg#L27>`_ file.
 
-Related projects
-----------------
-
-Are listed on the `skrub's website <https://skrub-data.github.io/stable/#related-projects>`_
 
 Contributing
 ------------
@@ -85,7 +92,8 @@ Additional resources
 --------------------
 
 * `Introductory video (YouTube) <https://youtu.be/_GNaaeEI2tg>`_
-* `Overview poster for EuroSciPy 2023 (Dropbox) <https://www.dropbox.com/scl/fi/89tapbshxtw0kh5uzx8dc/Poster-Euroscipy-2023.pdf?rlkey=u4ycpiyftk7rzttrjll9qlrkx&dl=0>`_
+* `JupyterCon 2023 talk (YouTube) <https://youtu.be/lvDN0wgTpeI>`_
+* `EuroSciPy 2023 poster (Dropbox) <https://www.dropbox.com/scl/fi/89tapbshxtw0kh5uzx8dc/Poster-Euroscipy-2023.pdf?rlkey=u4ycpiyftk7rzttrjll9qlrkx&dl=0>`_
 
 References
 ----------

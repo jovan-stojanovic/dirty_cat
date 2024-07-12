@@ -237,6 +237,8 @@ html_js_files = []
 # Project logo, to place at the top of the sidebar.
 html_logo = "_static/skrub.svg"
 
+# Icon to put in the browser tab.
+html_favicon = "_static/skrub.svg"
 
 # Modify the title to get good social-media links
 html_title = "skrub"
@@ -307,14 +309,15 @@ texinfo_documents = [
 # Configuration for intersphinx
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
-    "numpy": ("https://docs.scipy.org/doc/numpy", None),
-    "scipy": ("https://docs.scipy.org/doc/scipy/reference", None),
-    "matplotlib": ("https://matplotlib.org", None),
+    "numpy": ("https://numpy.org/doc/stable", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy", None),
+    "matplotlib": ("https://matplotlib.org/stable", None),
     "sklearn": ("https://scikit-learn.org/stable", None),
-    "skimage": ("http://scikit-image.org/docs/stable", None),
+    "skimage": ("https://scikit-image.org/docs/stable", None),
     "mayavi": ("http://docs.enthought.com/mayavi/mayavi", None),
-    "statsmodels": ("http://www.statsmodels.org/stable", None),
+    "statsmodels": ("https://www.statsmodels.org/stable", None),
     "pandas": ("http://pandas.pydata.org/pandas-docs/stable", None),
+    "polars": ("https://pola-rs.github.io/polars/py-polars/html", None),
     "seaborn": ("http://seaborn.pydata.org", None),
 }
 
@@ -372,10 +375,8 @@ def notebook_modification_function(notebook_content, notebook_filename):
         [
             "import micropip",
             (
-                "await micropip.install("
-                "'https://test-files.pythonhosted.org/packages/3c/03/"
-                "e1598c7abe536e56834f568f61497ad075d966c4c8fb7d0ad004b81e7bfc/"
-                "skrub-0.0.1.dev1-py3-none-any.whl')"
+                "await"
+                " micropip.install('https://files.pythonhosted.org/packages/eb/6d/0e78d028591bedd9580e49ae1060d9faf7fb4503e1db54227616db8f359d/skrub-0.2.0rc1-py3-none-any.whl')"
             ),
         ]
     )
@@ -496,16 +497,21 @@ numpydoc_xref_aliases = {
     "fetch_ken_embeddings": "skrub.datasets.fetch_ken_embeddings",
     "fuzzy_join": "skrub.fuzzy_join",
     "Joiner": "skrub.Joiner",
+    "AggJoiner": "skrub.AggJoiner",
+    "MultiAggJoiner": "skrub.MultiAggJoiner",
+    "AggTarger": "skrub.AggTarget",
     "GapEncoder": "skrub.GapEncoder",
     "MinHashEncoder": "skrub.MinHashEncoder",
     "SimilarityEncoder": "skrub.SimilarityEncoder",
     "DatetimeEncoder": "skrub.DatetimeEncoder",
     "deduplicate": "skrub.deduplicate",
+    "to_datetime": "skrub.to_datetime",
     "TableVectorizer": "skrub.TableVectorizer",
     "DatasetInfoOnly": "skrub.datasets._fetching.DatasetInfoOnly",
     "DatasetAll": "skrub.datasets._fetching.DatasetAll",
     "_replace_false_missing": "skrub._table_vectorizer._replace_false_missing",
 }
+numpydoc_xref_ignore = "all"
 
 # -- sphinx.ext.autodoc configuration -----------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html

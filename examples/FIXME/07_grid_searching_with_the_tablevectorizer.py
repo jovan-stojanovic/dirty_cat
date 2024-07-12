@@ -43,8 +43,9 @@ X.head(10)
 ###############################################################################
 # Let's import the |TableVectorizer| and see what the default assignation is:
 
-from skrub import TableVectorizer
 from pprint import pprint
+
+from skrub import TableVectorizer
 
 tv = TableVectorizer()
 tv.fit(X)
@@ -61,9 +62,7 @@ pprint(tv.transformers_)
 
 from skrub import MinHashEncoder
 
-tv = TableVectorizer(
-    high_card_cat_transformer=MinHashEncoder(),
-)
+tv = TableVectorizer(high_cardinality=MinHashEncoder())
 tv.fit(X)
 
 pprint(tv.transformers_)
@@ -80,7 +79,8 @@ pprint(tv.transformers_)
 #
 # Say we wanted to use a |MinHashEncoder| instead of the default |GapEncoder|,
 # but only for the column ``department_name``.
-# We can apply a column-specific transformer by using the ``specific_transformers`` parameter.
+# We can apply a column-specific transformer by using the ``specific_transformers``
+# parameter.
 
 tv = TableVectorizer(specific_transformers=[(MinHashEncoder(), ["department_name"])])
 tv.fit(X)
@@ -101,20 +101,21 @@ pprint(tv.transformers_)
 # For that, we use the dunder separator, which indicates a nesting layer.
 # That means that for tuning the parameter ``n_components`` of the
 # |GapEncoder| saved in the |TableVectorizer| attribute
-# ``high_card_cat_transformer``, we use the syntax
-# ``tablevectorizer__high_card_cat_transformer__n_components``.
+# ``high_cardinality_transformer``, we use the syntax
+# ``tablevectorizer__high_cardinality_transformer__n_components``.
 #
 # We recommend using the 3-tuple syntax for the column-specific transformers,
 # which allows us to give a name to the assignment (here ``mh_dep_name``).
 
+from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import make_pipeline
-from sklearn.ensemble import HistGradientBoostingClassifier
+
 from skrub import GapEncoder
 
 pipeline = make_pipeline(
     TableVectorizer(
-        high_card_cat_transformer=GapEncoder(),
+        high_cardinality=GapEncoder(),
         specific_transformers=[
             ("mh_dep_name", MinHashEncoder(), ["department_name"]),
         ],
@@ -123,7 +124,7 @@ pipeline = make_pipeline(
 )
 
 params = {
-    "tablevectorizer__high_card_cat_transformer__n_components": [10, 30, 50],
+    "tablevectorizer__high_cardinality_transformer__n_components": [10, 30, 50],
     "tablevectorizer__mh_dep_name__n_components": [25, 50],
 }
 
@@ -135,8 +136,3 @@ grid_search = GridSearchCV(pipeline, param_grid=params)
 #
 # In this notebook, we saw how to better customize the |TableVectorizer| so
 # it fits all your needs!
-#
-# If you've got any improvement ideas, please open a feature request on
-# `GitHub <https://github.com/skrub-data/skrub/issues/new?labels=enhancement&template=feature_request.yml>`_!
-#
-# We are always happy to see new suggestions from the community :)

@@ -35,7 +35,10 @@ machine-learning pipeline. In particular, it enables tuning parameters of
 import pandas as pd
 
 df = pd.read_csv(
-    "https://raw.githubusercontent.com/skrub-data/datasets/master/data/Happiness_report_2022.csv",  # noqa
+    (
+        "https://raw.githubusercontent.com/skrub-data/datasets/"
+        "master/data/Happiness_report_2022.csv"
+    ),
     thousands=",",
 )
 df.drop(df.tail(1).index, inplace=True)
@@ -69,8 +72,8 @@ from skrub.datasets import fetch_world_bank_indicator
 
 ###############################################################################
 # We extract the table containing GDP per capita by country:
-gdppc = fetch_world_bank_indicator(indicator_id="NY.GDP.PCAP.CD").X
-gdppc.head(3)
+gdp_per_capita = fetch_world_bank_indicator(indicator_id="NY.GDP.PCAP.CD").X
+gdp_per_capita.head(3)
 
 ###############################################################################
 # Then another table, with life expectancy by country:
@@ -83,37 +86,32 @@ legal_rights = fetch_world_bank_indicator("IC.LGL.CRED.XQ").X
 legal_rights.head(3)
 
 ###############################################################################
-# A correspondance problem
+# A correspondence problem
 # ------------------------
 #
 # Alas, the entries for countries do not perfectly match between our
 # original table (df), and those that we downloaded from the worldbank
-# (gdppc):
+# (gdp_per_capita):
 
 df.sort_values(by="Country").tail(7)
 
 ###############################################################################
-gdppc.sort_values(by="Country Name").tail(7)
+gdp_per_capita.sort_values(by="Country Name").tail(7)
 
 ###############################################################################
 # We can see that Yemen is written "Yemen*" on one side, and
 # "Yemen, Rep." on the other.
 #
-# We also have entries that probably do not have correspondances: "World"
+# We also have entries that probably do not have correspondences: "World"
 # on one side, whereas the other table only has country-level data.
 
 ###############################################################################
-# Joining tables with imperfect correspondance
+# Joining tables with imperfect correspondence
 # --------------------------------------------
 #
 # We will now join our initial table, df, with the 3 additional ones that
 # we have extracted.
 #
-
-# We will ignore the warnings:
-import warnings
-
-warnings.filterwarnings("ignore")
 
 ###############################################################################
 # .. _example_fuzzy_join:
@@ -124,35 +122,37 @@ warnings.filterwarnings("ignore")
 # To join them with skrub, we only need to do the following:
 from skrub import fuzzy_join
 
-df1 = fuzzy_join(
+augmented_df = fuzzy_join(
     df,  # our table to join
-    gdppc,  # the table to join with
+    gdp_per_capita,  # the table to join with
     left_on="Country",  # the first join key column
     right_on="Country Name",  # the second join key column
-    return_score=True,
+    add_match_info=True,
 )
 
-df1.tail(20)
-# We merged the first WB table to our initial one.
+augmented_df.tail(20)
+
+# We merged the first World Bank table to our initial one.
 
 ###############################################################################
 # .. topic:: Note:
 #
-#    We fix the ``return_score`` parameter to `True` so as to keep the matching
-#    score, that we will use later to show what are the worst matches.
+#    We set the ``add_match_info`` parameter to `True` to show distances
+#    between the rows that have been matched, that we will use later to show
+#    what are the worst matches.
 
 ###############################################################################
 #
 # We see that our |fj| succesfully identified the countries,
 # even though some country names differ between tables.
 #
-# For instance, "Czechia" is well identified as "Czech Republic" and
-# "Luxembourg*" as "Luxembourg".
+# For instance, "Egypt" and "Egypt, Arab Rep." are correctly matched, as are
+# "Lesotho*" and "Lesotho".
 #
 # .. topic:: Note:
 #
 #    This would all be missed out if we were using other methods such as
-#    `pandas.merge <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.merge.html>`_,  # noqa
+#    `pandas.merge <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.merge.html>`_,
 #    which can only find exact matches.
 #    In this case, to reach the best result, we would have to `manually` clean
 #    the data (e.g. remove the * after country name) and look
@@ -161,10 +161,10 @@ df1.tail(20)
 # Let's do some more inspection of the merging done.
 
 ###############################################################################
-# Let's print the four worst matches, which will give
+# Let's print the worst matches, which will give
 # us an overview of the situation:
 
-df1.sort_values("matching_score").head(4)
+augmented_df.sort_values("skrub_Joiner_rescaled_distance").tail(10)
 
 ###############################################################################
 # We see that some matches were unsuccesful
@@ -172,33 +172,34 @@ df1.sort_values("matching_score").head(4)
 # because there is simply no match in the two tables.
 
 ###############################################################################
-# In this case, it is better to use the threshold parameter
+# In this case, it is better to use the threshold parameter (``max_dist``)
 # so as to include only precise-enough matches:
 #
-df1 = fuzzy_join(
+augmented_df = fuzzy_join(
     df,
-    gdppc,
+    gdp_per_capita,
     left_on="Country",
     right_on="Country Name",
-    match_score=0.35,
-    return_score=True,
+    max_dist=0.9,
+    add_match_info=True,
 )
-df1.sort_values("matching_score").head(4)
+augmented_df.sort_values("skrub_Joiner_rescaled_distance", ascending=False).head()
 
 ###############################################################################
 # Matches that are not available (or precise enough) are marked as `NaN`.
-# We will remove them using the drop_unmatched parameter:
+# We will remove them using the ``drop_unmatched`` parameter:
 
-df1 = fuzzy_join(
+augmented_df = fuzzy_join(
     df,
-    gdppc,
+    gdp_per_capita,
     left_on="Country",
     right_on="Country Name",
-    match_score=0.35,
     drop_unmatched=True,
+    max_dist=0.9,
+    add_match_info=True,
 )
 
-df1.drop(columns=["Country Name"], inplace=True)
+augmented_df.drop(columns=["Country Name"], inplace=True)
 
 ###############################################################################
 # We can finally plot and look at the link between GDP per capital
@@ -210,7 +211,7 @@ sns.set_context("notebook")
 
 plt.figure(figsize=(4, 3))
 ax = sns.regplot(
-    data=df1,
+    data=augmented_df,
     x="GDP per capita (current US$)",
     y="Happiness score",
     lowess=True,
@@ -232,23 +233,24 @@ plt.show()
 #
 # Now let's include other information that may be relevant, such as in the
 # life_exp table:
-df2 = fuzzy_join(
-    df1,
+augmented_df = fuzzy_join(
+    augmented_df,
     life_exp,
     left_on="Country",
     right_on="Country Name",
-    match_score=0.45,
+    max_dist=0.9,
+    add_match_info=True,
 )
 
-df2.drop(columns=["Country Name"], inplace=True)
+augmented_df.drop(columns=["Country Name"], inplace=True)
 
-df2.head(3)
+augmented_df.head(3)
 
 ###############################################################################
 # Let's plot this relation:
 plt.figure(figsize=(4, 3))
 fig = sns.regplot(
-    data=df2,
+    data=augmented_df,
     x="Life expectancy at birth, total (years)",
     y="Happiness score",
     lowess=True,
@@ -268,23 +270,24 @@ plt.show()
 # ......................................
 #
 # And the table with a measure of legal rights strength in the country:
-df3 = fuzzy_join(
-    df2,
+augmented_df = fuzzy_join(
+    augmented_df,
     legal_rights,
     left_on="Country",
     right_on="Country Name",
-    match_score=0.45,
+    max_dist=0.9,
+    add_match_info=True,
 )
 
-df3.drop(columns=["Country Name"], inplace=True)
+augmented_df.drop(columns=["Country Name"], inplace=True)
 
-df3.head(3)
+augmented_df.head(3)
 
 ###############################################################################
-# Let's take a look at their correspondance in a figure:
+# Let's take a look at their correspondence in a figure:
 plt.figure(figsize=(4, 3))
 fig = sns.regplot(
-    data=df3,
+    data=augmented_df,
     x="Strength of legal rights index (0=weak to 12=strong)",
     y="Happiness score",
     lowess=True,
@@ -307,9 +310,9 @@ plt.show()
 # ----------------
 #
 # We now separate our covariates (X), from the target (or exogenous)
-# variables: y
-X = df3.drop("Happiness score", axis=1).select_dtypes(exclude=object)
-y = df3[["Happiness score"]]
+# variables: y.
+y = augmented_df["Happiness score"]
+X = augmented_df.drop(["Happiness score", "Country"], axis=1)
 
 ###################################################################
 # Let us now define the model that will be used to predict the happiness score:
@@ -318,10 +321,10 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.model_selection import KFold
 
 hgdb = HistGradientBoostingRegressor(random_state=0)
-cv = KFold(n_splits=2, shuffle=True, random_state=0)
+cv = KFold(n_splits=5, shuffle=True, random_state=0)
 
 #################################################################
-# To evaluate our model, we will apply a `4-fold cross-validation`.
+# To evaluate our model, we will apply a `5-fold cross-validation`.
 # We evaluate our model using the `R2` score.
 #
 # Let's finally assess the results of our models:
@@ -331,10 +334,10 @@ cv_results_t = cross_validate(hgdb, X, y, cv=cv, scoring="r2")
 
 cv_r2_t = cv_results_t["test_score"]
 
-print(f"Mean R2 score is {cv_r2_t.mean():.2f} +- {cv_r2_t.std():.2f}")
+print(f"Mean R² score is {cv_r2_t.mean():.2f} +- {cv_r2_t.std():.2f}")
 
 #################################################################
-# We have a satisfying first result: an R2 of 0.66!
+# We have a satisfying first result: an R² of 0.63!
 #
 # Data cleaning varies from dataset to dataset: there are as
 # many ways to clean a table as there are errors. |fj|
@@ -349,10 +352,10 @@ print(f"Mean R2 score is {cv_r2_t.mean():.2f} +- {cv_r2_t.std():.2f}")
 #######################################################################
 # Using the |joiner| to fuzzy join multiple tables
 # --------------------------------------------
-# A faster way to merge different tables from the World Bank
-# to `X` is to use the |joiner|.
+# A convenient way to merge different tables from the World Bank
+# to `X` in a scikit-learn Pipeline and tune the parameters is to use the |joiner|.
 #
-# The |joiner| is a transformer that can easily chain joins of tables on
+# The |joiner| is a transformer that can fuzzy-join a table on
 # a main table.
 
 #######################################################################
@@ -362,51 +365,33 @@ print(f"Mean R2 score is {cv_r2_t.mean():.2f} +- {cv_r2_t.std():.2f}")
 # .............................
 
 y = df["Happiness score"]
-#######################################################################
-# We gather the auxilliary tables into a
-# list of (tables, keys) for the `tables` parameter.
-# An instance of the transformer with the necessary information is:
-from skrub import Joiner
+df = df.drop("Happiness score", axis=1)
 
-joiner = Joiner(
-    tables=[
-        (gdppc, "Country Name"),
-        (life_exp, "Country Name"),
-        (legal_rights, "Country Name"),
-    ],
-    main_key="Country",
-)
-
-#################################################################
-# Fitting and transforming into the final table
-# .............................................
-# To get our final joined table we will fit and transform the main table (df)
-# with our create instance of the |joiner|:
-df_final = joiner.fit_transform(df)
-
-df_final.head(10)
-
-##########################################################################
-# And that's it! As previously, we now have a big table
-# ready for machine learning.
-# Let's create our machine learning pipeline:
-from sklearn.compose import make_column_transformer
 from sklearn.pipeline import make_pipeline
 
-# We include only the columns that will be pertinent for our regression:
-encoder = make_column_transformer(
-    (
-        "passthrough",
-        [
-            "GDP per capita (current US$)",
-            "Life expectancy at birth, total (years)",
-            "Strength of legal rights index (0=weak to 12=strong)",
-        ],
-    ),
-    remainder="drop",
+from skrub import Joiner, SelectCols
+
+# We create a selector that we will insert at the end of our pipeline, to
+# select the relevant columns before fitting the regressor
+selector = SelectCols(
+    [
+        "GDP per capita (current US$) gdp",
+        "Life expectancy at birth, total (years) life_exp",
+        "Strength of legal rights index (0=weak to 12=strong) legal_rights",
+    ]
 )
 
-pipeline = make_pipeline(joiner, encoder, HistGradientBoostingRegressor())
+# And we can now put together the pipeline
+pipeline = make_pipeline(
+    Joiner(gdp_per_capita, main_key="Country", aux_key="Country Name", suffix=" gdp"),
+    Joiner(life_exp, main_key="Country", aux_key="Country Name", suffix=" life_exp"),
+    Joiner(
+        legal_rights, main_key="Country", aux_key="Country Name", suffix=" legal_rights"
+    ),
+    selector,
+    HistGradientBoostingRegressor(),
+)
+
 
 ##########################################################################
 # And the best part is that we are now able to evaluate the parameters of the |fj|.
@@ -415,30 +400,14 @@ pipeline = make_pipeline(joiner, encoder, HistGradientBoostingRegressor())
 
 from sklearn.model_selection import GridSearchCV
 
-# We will test four possible values of match_score:
-params = {"joiner__match_score": [0.2, 0.3, 0.4, 0.5]}
+# We will test 2 possible values of max_dist:
+params = {
+    "joiner-1__max_dist": [0.1, 0.9],
+    "joiner-2__max_dist": [0.1, 0.9],
+    "joiner-3__max_dist": [0.1, 0.9],
+}
 
-grid = GridSearchCV(pipeline, param_grid=params)
+grid = GridSearchCV(pipeline, param_grid=params, cv=cv)
 grid.fit(df, y)
 
-print(grid.best_params_)
-##########################################################################
-# The grid searching gave us the best value of 0.5 for the parameter
-# ``match_score``. Let's use this value in our regression:
-#
-
-print(f"Mean R2 score with pipeline is {grid.score(df, y):.2f}")
-
-##########################################################################
-#
-# .. topic:: Note:
-#
-#    Here, ``grid.score()`` takes directly the best model
-#    (with ``match_score=0.5``) that was found during the grid search.
-#    Thus, it is equivalent to fixing the ``match_score`` to 0.5 and
-#    refitting the pipeline on the data.
-#
-#
-# Great, by evaluating the correct ``match_score`` we improved our
-# results significantly!
-#
+print("Best parameters:", grid.best_params_)

@@ -161,7 +161,6 @@ embedding_games.head()
 embedding_publisher = fetch_ken_embeddings(
     search_types="game_development_companies|game_companies|game_publish",
     embedding_table_id="games",
-    suffix="_aux",
 )
 
 embedding_publisher.head()
@@ -186,8 +185,8 @@ emb_columns2 = [f"X{j}_aux" for j in range(n_dim)]
 # column "Publisher"
 from skrub import Joiner
 
-fa1 = Joiner(tables=(embedding_games, "Entity"), main_key="Name")
-fa2 = Joiner(tables=(embedding_publisher, "Entity"), main_key="Publisher")
+fa1 = Joiner(embedding_games, aux_key="Entity", main_key="Name")
+fa2 = Joiner(embedding_publisher, aux_key="Entity", main_key="Publisher", suffix="_aux")
 
 X_full = fa1.fit_transform(X)
 X_full = fa2.fit_transform(X_full)
@@ -215,7 +214,7 @@ ohe = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
 encoder = make_column_transformer(
     ("passthrough", ["Year"]),
     (ohe, ["Genre"]),
-    (min_hash, ["Platform"]),
+    (min_hash, "Platform"),
     remainder="drop",
 )
 
@@ -306,7 +305,7 @@ encoder3 = make_column_transformer(
     ("passthrough", emb_columns2),
     ("passthrough", ["Year"]),
     (ohe, ["Genre"]),
-    (min_hash, ["Platform"]),
+    (min_hash, "Platform"),
     remainder="drop",
 )
 

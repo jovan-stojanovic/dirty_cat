@@ -44,6 +44,7 @@ pool of tables are combined for machine learning.
 #       Here, we consider only flights from 2008.
 
 import pandas as pd
+
 from skrub.datasets import fetch_figshare
 
 flights = fetch_figshare("41771418").X
@@ -58,7 +59,8 @@ import seaborn as sns
 
 sns.set_theme(style="ticks")
 
-sns.histplot(data=flights, x="ArrDelay", log_scale=(False, True))
+ax = sns.histplot(data=flights, x="ArrDelay")
+ax.set_yscale("log")
 plt.show()
 
 ############################################################################
@@ -107,7 +109,7 @@ aux.head()
 
 from skrub import Joiner
 
-joiner = Joiner(tables=(airports, ["lat", "long"]), main_key=["LATITUDE", "LONGITUDE"])
+joiner = Joiner(airports, aux_key=["lat", "long"], main_key=["LATITUDE", "LONGITUDE"])
 
 aux_augmented = joiner.fit_transform(aux)
 
@@ -118,7 +120,8 @@ aux_augmented.head()
 # Let's instanciate another multiple key joiner on the date and the airport:
 
 joiner = Joiner(
-    tables=(aux_augmented, ["YEAR/MONTH/DAY", "iata"]),
+    aux_augmented,
+    aux_key=["YEAR/MONTH/DAY", "iata"],
     main_key=["Year_Month_DayofMonth", "Origin"],
 )
 
@@ -131,9 +134,10 @@ flights.drop(columns=["TailNum", "FlightNum"])
 # our main table.
 # - We will use this main table to model the prediction of flight delay.
 
-from skrub import TableVectorizer
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.pipeline import make_pipeline
+
+from skrub import TableVectorizer
 
 tv = TableVectorizer()
 hgb = HistGradientBoostingClassifier()
